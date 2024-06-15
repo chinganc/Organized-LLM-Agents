@@ -33,17 +33,17 @@ class Profiler(object):
     _tokens_out: int = 0
     _times_in: int = 0
     _times_out: int = 0
-    
+
     def __init__(self, tokens_in=0, tokens_out=0, times_in=0, times_out=0) -> None:
         self._tokens_in = tokens_in
         self._tokens_out = tokens_out
         self._times_in = times_in
         self._times_out = times_out
-    
+
     def update_tokens(self, tokens_in=0, tokens_out=0):
         self._tokens_in += tokens_in
         self._tokens_out += tokens_out
-    
+
     def report(self):
         return self._tokens_in, self._tokens_out, self._times_in, self._times_out
 
@@ -55,7 +55,7 @@ def num_tokens_from_string(string: str, encoding_name="cl100k_base") -> int:
 
 class AssistantAgentCoT(AssistantAgent):
     """An adapted version of AssistantAgent. The received message should be a json containing 'message' and 'thought' field. The 'message' field is extracted as response."""
-    
+
     def __init__(
         self,
         name: str,
@@ -81,11 +81,11 @@ class AssistantAgentCoT(AssistantAgent):
         self.sampling_params = sampling_params
         self.profiler = Profiler()
         self.register_reply(Agent, AssistantAgentCoT.generate_oai_reply_profile, position=1)
-    
+
     def generate_oai_reply_profile(
-        self, 
-        messages: Optional[List[Dict]] = None, 
-        sender: Optional[Agent] = None, 
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Agent] = None,
         config: Optional[Any] = None
     ) -> Tuple[bool, Union[str, Dict, None]]:
         llm_config = self.llm_config if config is None else config
@@ -105,16 +105,16 @@ class AssistantAgentCoT(AssistantAgent):
         tokens_in = response["usage"]["prompt_tokens"]
         tokens_out = response["usage"]["completion_tokens"]
         self.profiler.update_tokens(tokens_in, tokens_out)
-        
+
         return True, oai.ChatCompletion.extract_text_or_function_call(response)[0]
-    
+
     def _prepare_chat(self, recipient: ConversableAgent, clear_history):
         super()._prepare_chat(recipient, clear_history)
         system_message = self.system_message + f" You are now having a 1 on 1 conversation with {recipient.name}"
         self.update_system_message(system_message)
         system_message = recipient.system_message + f" You are now having a 1 on 1 conversation with {self.name}"
         recipient.update_system_message(system_message)
-    
+
     def _process_received_message(self, message, sender, silent):
         message = self._message_to_dict(message)
         original_message = copy.deepcopy(message)
@@ -125,7 +125,7 @@ class AssistantAgentCoT(AssistantAgent):
             message["content"] = content
         except:
             pass
-        
+
         valid = self._append_oai_message(message, "user", sender)
         if not valid:
             raise ValueError(
@@ -136,11 +136,11 @@ class AssistantAgentCoT(AssistantAgent):
 
     def report(self):
         return self.profiler.report()
-    
+
     def reset_profile(self):
         self.profiler = Profiler(0, 0, 0, 0)
 
-    
+
 def select_target(prompt, autogen_agent, history, cur_history, info: Dict, llm_agent: LLM_agent):
     """let the agent select who to speak to and what to ask"""
     # format prompt for selecting recipient
@@ -164,9 +164,11 @@ def select_target(prompt, autogen_agent, history, cur_history, info: Dict, llm_a
             llm_agent.LLM.generator = llm_agent.LLM.lm_engine()
             # print(f"Invalid response: {response_json}, please try again")
             continue
-    
-    tokens_in = usage["prompt_tokens"]
-    tokens_out = usage["completion_tokens"]
+
+    # tokens_in = usage["prompt_tokens"]
+    # tokens_out = usage["completion_tokens"]
+    tokens_in = usage.prompt_tokens
+    tokens_out = usage.completion_tokens
     info["select"]["tokens_in"] += tokens_in
     info["select"]["tokens_out"] += tokens_out
     return receiver, content, thoughts, info
@@ -181,7 +183,7 @@ def format_dialog(name, history: Dict, cur_history):
 
     for idx, messages in enumerate(his):
         prompt += f"Dialogue {idx+1}: "
-        
+
         for message in messages:
             parts = message.split(":")
             names = parts[0].strip()
@@ -194,7 +196,7 @@ def format_dialog(name, history: Dict, cur_history):
     his = cur_history.get(name, [])
     if len(his) == 0:
         prompt += "None\n"
-    
+
     for idx, message in enumerate(his):
         parts = message.split(":")
         names = parts[0].strip()
@@ -217,7 +219,7 @@ def agent_by_names(agents, names: str) -> List[AssistantAgentCoT]:
 
 def merge_history(names, previous, current):
     new = defaultdict(list)
-    
+
     for name in names:
         prev = previous[name]
         prev.append(current[name])
@@ -257,7 +259,7 @@ def visualize_comms(edges: List[Tuple], names, fig_folder_name="fig/comms"):
     for node1, node2 in graph_time.edges:
         edge_colors.append(edge_weights_time[f"{node1},{node2}"])
 
-    cmap = plt.cm.plasma_r 
+    cmap = plt.cm.plasma_r
     pos = nx.circular_layout(graph_time)
     nodes = nx.draw_networkx_nodes(graph_time, pos, node_size=800, node_color="tab:blue")
     edges = nx.draw_networkx_edges(
@@ -315,11 +317,11 @@ def visualize_comms(edges: List[Tuple], names, fig_folder_name="fig/comms"):
         edge_color=edge_colors,
         edge_cmap=cmap,
         width=2,
-        connectionstyle="arc3, rad=0.15", 
+        connectionstyle="arc3, rad=0.15",
     )
     nx.draw_networkx_labels(graph_token, pos, font_size=10)
 
-    # set alpha value for each edge 
+    # set alpha value for each edge
     for edge in edges:
         edge.set_alpha(0.9)
     pc = mpl.collections.PatchCollection(edges, cmap=cmap)
@@ -332,7 +334,7 @@ def visualize_comms(edges: List[Tuple], names, fig_folder_name="fig/comms"):
     plt.savefig(f"{fig_folder_name}_{date_hour_minute}/token_round_{round}.png", dpi=200)
 
     # save the edge list for further visualizing
-    with open(f"{fig_folder_name}_{date_hour_minute}/round_{round}.pkl", "wb") as f: 
+    with open(f"{fig_folder_name}_{date_hour_minute}/round_{round}.pkl", "wb") as f:
         pickle.dump(
             obj={
                 "tokens": edge_weights_token,
@@ -343,7 +345,7 @@ def visualize_comms(edges: List[Tuple], names, fig_folder_name="fig/comms"):
     round += 1
 
 def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[LLM_agent], converse_agents: List[AssistantAgentCoT], random_start_comm=False, log_thoughts=True, visualize=False, fig_folder_name="fig/comms"):
-    """Let the agents communicate with each other. 
+    """Let the agents communicate with each other.
 
     Args:
         names: a list containing the names of each agent. This is used to identify the agents.
@@ -360,7 +362,7 @@ def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[L
     Returns:
         history: renewed conversation history
     """
-    
+
     # agents = []
     cur_history = defaultdict(list)
     llm_config_list = []
@@ -368,11 +370,11 @@ def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[L
     communicate_edges = []
 
     if random_start_comm:
-        random.shuffle(speak_order)      
-    
+        random.shuffle(speak_order)
+
     for agent in llm_agents:
         llm_config_list.append(agent.LLM.llm_config)
-    
+
     for i in speak_order:
         # handle conversation one by one
         sender = converse_agents[i]
@@ -383,7 +385,7 @@ def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[L
         logger.info(f"messages: {messages}")
         if log_thoughts:
             logger.info(f"thoughts: {thoughts}")
-        
+
         if (isinstance(receiver, str) and "everyone" in receiver.lower()) or (isinstance(receiver, list) and "everyone" in receiver):
             # broadcast the message
             cur_history[sender.name].append(f'{sender.name} to everyone: {messages[0]}')
@@ -395,14 +397,14 @@ def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[L
                 communicate_edges.append((sender.name, receiver.name))
                 info = update_info(info, sender, receiver, messages[0])
             continue
-            
+
         if isinstance(receiver, str):
             receiver = [receiver]
         if isinstance(messages, str):
             messages = [messages]
         assert isinstance(receiver, list), "The selected receivers should be a list."
         assert isinstance(messages, list), "Messages to receivers should be a list."
-        
+
         receivers = agent_by_names(converse_agents, receiver)
         # the agent decides not to send a message
         if len(receivers) == 0:
@@ -410,7 +412,7 @@ def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[L
             logger.info("Successfully terminated conversation.")
             # print("thoughts:", thoughts)
             continue
-        
+
         # the agent decides to broadcast a message
         elif len(messages) == 1 and len(receivers) > 1: #just as  broacast
             cur_history[sender.name].append(f'{sender.name} to everyone: {messages[0]}')
@@ -422,7 +424,7 @@ def communicate(names, selector_prompts, history, info: Dict, llm_agents: List[L
                 communicate_edges.append((sender.name, receiver.name))
                 info = update_info(info, sender, receiver, messages[0])
             continue
-        
+
         elif len(messages) != len(receivers):
             receiver_len = min(len(receivers), len(messages))
             messages = messages[:receiver_len]

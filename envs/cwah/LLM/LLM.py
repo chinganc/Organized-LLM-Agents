@@ -6,7 +6,9 @@ import json
 from json import JSONDecodeError
 import os
 import pandas as pd
-from openai.error import OpenAIError
+# from openai.error import OpenAIError
+from openai import OpenAIError
+
 import backoff
 import logging
 logger = logging.getLogger("__main__")
@@ -45,7 +47,7 @@ class LLM:
 			self.single = 'single' in self.prompt_template_path or self.teammate_names == ['nobody']
 			df = pd.read_csv(self.prompt_template_path)
 			self.prompt_template = df['prompt'][0].replace("$AGENT_NAME$", self.agent_name).replace("$TEAMMATE_NAME$", ", ".join(self.teammate_names))
-		
+
 		self.lm_id = lm_id
 		self.chat = 'gpt-3.5-turbo' in lm_id or 'gpt-4' in lm_id or 'chat' in lm_id or 'human' in lm_id
 		self.total_cost = 0
@@ -69,8 +71,11 @@ class LLM:
 		@backoff.on_exception(backoff.expo, OpenAIError)
 		def _generate(prompt, sampling_params=None):
 			response = oai_wrapper.create(messages=prompt, config_list=[self.llm_config], **self.sampling_params) #, use_cache=False cache_seed=self.llm_config['seed']
-			usage = response["usage"]
-			response = response["choices"][0]["message"]["content"]
+			# usage = response["usage"]
+			# response = response["choices"][0]["message"]["content"]
+			usage = response.usage
+			response = response.choices[0].message.content
+
 			return response, usage
 		return _generate
 
@@ -260,7 +265,7 @@ class LLM:
 		# goal_desc = self.goal2description(unsatisfied_goal, goal_location_room)
 		progress_desc = self.progress2text(current_room, grabbed_objects, unchecked_containers, ungrabbed_objects, goal_location_room, satisfied, teammate_grabbed_objects, teammate_last_room, room_explored, steps)
 		action_history_desc = ", ".join(action_history[-self.action_history_len:] if len(action_history) > self.action_history_len else action_history)
-		dialogue_history_desc = '\n'.join(dialogue_history[-self.dialogue_history_len:] if len(dialogue_history) > self.dialogue_history_len else dialogue_history) 
+		dialogue_history_desc = '\n'.join(dialogue_history[-self.dialogue_history_len:] if len(dialogue_history) > self.dialogue_history_len else dialogue_history)
 		prompt = self.prompt_template.replace('$GOAL$', self.goal_desc)
 		if self.organization_instructions is not None:
 			prompt = prompt.replace("$ORGANIZATION_INSTRUCTIONS$", self.organization_instructions)
@@ -320,4 +325,3 @@ class LLM:
 					 "plan": plan,
 					 "total_cost": self.total_cost})
 		return plan, info
-

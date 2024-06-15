@@ -71,7 +71,10 @@ class ChatCompletionManager:
 
     def create(self, messages, config_list=None, *args, **kwargs):
         if kwargs.get('human_agent') is None:
-            return oai.ChatCompletion.create(messages=messages, config_list=config_list, request_timeout=600, *args, **kwargs)
+            import autogen
+            return autogen.OpenAIWrapper(config_list=config_list).create(messages=messages, *args, **kwargs)
+
+            # return oai.ChatCompletion.create(messages=messages, config_list=config_list, request_timeout=600, *args, **kwargs)
 
         # human player
         else:
@@ -100,7 +103,7 @@ class ChatCompletionManager:
                 'usage': {
                     'prompt_tokens': 9999,
                     'completion_tokens': 9999,
-                },  
+                },
                 'choices': [ { 'message': {'content': str_result, 'role': 'assistant'} } ]
             }
             return result

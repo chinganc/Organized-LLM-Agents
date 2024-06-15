@@ -30,7 +30,7 @@ if __name__ == '__main__':
         args.lm_id_list = [args.lm_id_list[0]] * args.agent_num
     else:
         assert len(args.lm_id_list) == args.agent_num, "lm_id_list must be the same length as agent_num"
-    
+
     if args.llm_config_list is None:
         args.llm_config_list = []
         for lm_id in args.lm_id_list:
@@ -41,7 +41,7 @@ if __name__ == '__main__':
                 llm_config.update({'seed': args.seed})
                 args.llm_config_list.append(llm_config)
     print("args.lm_id_list:", args.lm_id_list)
-    
+
     env_task_set = pickle.load(open(args.dataset_path, 'rb'))
 
     logging.basicConfig(format='%(asctime)s - %(name)s:\n %(message)s', level=logging.INFO)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
             print("Invalid organization code")
             raise NotImplementedError
 
-    args.record_dir = f'../test_results/{args.mode}' 
+    args.record_dir = f'../test_results/{args.mode}'
     logger.info("mode: {}".format(args.mode))
     Path(args.record_dir).mkdir(parents=True, exist_ok=True)
 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                                )
 
     agents = [lambda x, y: None for i in range(args.agent_num)]
-    
+
     arena = ArenaMP(args.max_episode_length, id_run, env_fn, agents, args.record_dir, args.debug, run_predefined_actions=False, comm=args.comm, args=args)
 
     for iter_id in range(num_tries):
@@ -167,4 +167,3 @@ if __name__ == '__main__':
         logger.info('comm_times per step: {:.2f}'.format(np.array(comm_times).mean() / np.array(steps_list).mean() if len(steps_list) > 0 else None))
         print('failed_tasks:', failed_tasks)
         pickle.dump(test_results, open(args.record_dir + '/results.pik', 'wb'))
-
