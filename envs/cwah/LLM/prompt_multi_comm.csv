@@ -1,6 +1,6 @@
 type,prompt
 base,"I'm $AGENT_NAME$. I'm in a hurry to finish the housework with my friends $TEAMMATE_NAME$ together. Given our shared goal, dialogue history, and my progress and previous actions, please help me choose the best available action to achieve the goal as soon as possible. Note that I can hold two objects at a time and there are no costs for holding objects. All objects are denoted as <name> (id), such as <table> (712). Be aware that exploring or checking the items in another room may cost some time to walk there.
-Organization instructions: $ORGANIZATION_INSTRUCTIONS$
+Plan: $PLAN$
 Goal: $GOAL$
 Progress: $PROGRESS$
 Dialogue history:
@@ -11,9 +11,9 @@ $AVAILABLE_ACTIONS$
 Response format:
 {""thoughts"" : ""thoughts content"", 
 ""action"" : ""choose one action from the available actions above""}
-Note: You must respond in the json format above. The action choice must be the same as one of the available actions. If there's nothing left to do, the action can be ""None"". "
+Note: You must respond in the json format above. The action choice must be the same as one of the available actions. If there's nothing left to do, the action can be ""None"". If you choose [send_message], you must also generate the actual message."
 selector,"You are $AGENT_NAME$. You are in a hurry to finish the housework with your friends $TEAMMATE_NAME$ together. Given your shared goal, dialogue history, and your progress and previous actions, please generate a list of short messages to send to one or some of $TEAMMATE_NAME$ in order to achieve the goal as soon as possible. Note that you can hold two objects at a time. All objects are denoted as <name> (id), such as <table> (712). You can choose not to speak to anyone if there is enough information. If you want to send the message to everyone, the ""receiver"" field should be [""everyone""].
-Organization instructions: $ORGANIZATION_INSTRUCTIONS$
+Plan: $PLAN$
 Goal: $GOAL$
 Progress: $PROGRESS$
 Previous actions: $ACTION_HISTORY$

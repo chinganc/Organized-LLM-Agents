@@ -144,7 +144,9 @@ class LLM_agent:
 		if len(self.grabbed_objects) == 2:
 			return f"[goput] {self.goal_location}", {}
 
-		return self.LLM.run(self.current_room, [self.id2node[x] for x in self.grabbed_objects], self.satisfied, self.unchecked_containers, self.ungrabbed_objects, self.id_inside_room[self.goal_location_id], self.action_history, self.dialogue_history, self.teammate_grabbed_objects, [self.id_inside_room[teammate_agent_id_item] for teammate_agent_id_item in self.teammate_agent_id], None, self.steps)
+		return self.LLM.run(self.current_room, [self.id2node[x] for x in self.grabbed_objects], self.satisfied, self.unchecked_containers,
+							self.ungrabbed_objects, self.id_inside_room[self.goal_location_id],
+							self.action_history, self.dialogue_history, self.teammate_grabbed_objects, [self.id_inside_room[teammate_agent_id_item] for teammate_agent_id_item in self.teammate_agent_id], None, self.steps)
 
 
 	def check_progress(self, state, goal_spec):
@@ -165,6 +167,9 @@ class LLM_agent:
 					# 	print(satisfied)
 			if cnt > 0:
 				unsatisfied[key] = cnt
+
+		# print("Satisfied: ", satisfied)
+		# print("Unsatisfied: ", unsatisfied)
 		return satisfied, unsatisfied
 
 

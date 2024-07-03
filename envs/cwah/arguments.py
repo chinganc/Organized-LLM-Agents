@@ -43,9 +43,13 @@ def get_args():
                         help='task ids to be tested')
 
     # Exec args
+    # parser.add_argument(
+    #     '--executable_file', type=str,
+    #     default='../executable/linux_exec.v2.3.0.x86_64')
+
     parser.add_argument(
         '--executable_file', type=str,
-        default='../executable/linux_exec.v2.3.0.x86_64')
+        default='../executable/linux_exec.v2.2.4.x86_64')
 
 
     parser.add_argument(

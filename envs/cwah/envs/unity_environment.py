@@ -96,10 +96,13 @@ class UnityEnvironment(BaseUnityEnvironment):
 		reward = 0.
 		done = True
 		satisfied, unsatisfied = utils.check_progress(self.get_graph(), self.goal_spec[0])
+		print("satisfied: ", satisfied)
+		print("unsatisfied: ", unsatisfied)
+
 		for key, value in satisfied.items():
 			preds_needed, mandatory, reward_per_pred = self.goal_spec[0][key]
 			# How many predicates achieved
-			value_pred = min(len(value), preds_needed)
+			value_pred = min(len([v for v in value if v is not None]), preds_needed)
 			reward += value_pred * reward_per_pred
 
 			if mandatory and unsatisfied[key] > 0:
